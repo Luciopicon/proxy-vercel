@@ -1,17 +1,25 @@
-export default async function handler(req, res) {
-  const targetUrl = `http://185.194.204.52:8443${req.url}`;
+import { createServer } from 'http';
+import { WebSocketServer } from 'ws';
+import { createProxyServer } from 'http-proxy';
 
-  try {
-    const response = await fetch(targetUrl, {
-      method: req.method,
-      headers: req.headers,
-      body: req.method === "GET" || req.method === "HEAD" ? null : req,
-    });
+const server = createServer();
+const proxy = createProxyServer({ target: 'ws://185.194.204.52:8080', ws: true });
 
-    const contentType = response.headers.get("content-type");
-    res.setHeader("content-type", contentType || "text/plain");
-    res.status(response.status).send(await response.text());
-  } catch (error) {
-    res.status(502).send("Erro ao conectar ao IP de origem.");
-  }
-}
+// WebSocket handler
+const wss = new WebSocketServer({ noServer: true });
+wss.on('connection', socket => {
+  console.log('WebSocket conectado');
+  socket.on('message', msg => {
+    console.log('Recebido:', msg.toString());
+  });
+});
+
+// Upgrade handler
+server.on('upgrade', (req, socket, head) => {
+  proxy.ws(req, socket, head);
+});
+
+// Start
+server.listen(8080, () => {
+  console.log('Proxy WebSocket ativo na porta 8080');
+});
