@@ -1,5 +1,5 @@
 export default async function handler(req, res) {
-  const targetUrl = `http://185.194.204.52:8080${req.url}`;
+  const targetUrl = `http://185.194.204.52:8443${req.url}`;
 
   try {
     const response = await fetch(targetUrl, {
